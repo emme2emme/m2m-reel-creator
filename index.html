@@ -1,1538 +1,393 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🎬 M2M Reel Creator</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3498db">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="M2M Reel Creator">
-    <meta name="mobile-web-app-capable" content="yes">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 10px;
-            color: #333;
-            overflow-x: hidden;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
-            padding: 30px 25px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(180deg); }
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            margin-bottom: 8px;
-            font-weight: 700;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header p {
-            font-size: 1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        .content {
-            padding: 25px 20px;
-        }
-
-        .step {
-            margin-bottom: 30px;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .step:nth-child(1) { animation-delay: 0.1s; }
-        .step:nth-child(2) { animation-delay: 0.2s; }
-        .step:nth-child(3) { animation-delay: 0.3s; }
-        .step:nth-child(4) { animation-delay: 0.4s; }
-        .step:nth-child(5) { animation-delay: 0.5s; }
-        .step:nth-child(6) { animation-delay: 0.6s; }
-        .step:nth-child(7) { animation-delay: 0.7s; }
-        .step:nth-child(8) { animation-delay: 0.8s; }
-        .step:nth-child(9) { animation-delay: 0.9s; }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .step-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .step-number {
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-        }
-
-        .selection-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .folder-selector {
-            position: relative;
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-height: 100px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            touch-action: manipulation;
-        }
-
-        .folder-selector:active {
-            transform: scale(0.98);
-        }
-
-        .folder-selector:hover {
-            border-color: #3498db;
-            background: #e3f2fd;
-        }
-
-        .folder-selector.active {
-            border-color: #27ae60;
-            background: #d4edda;
-            border-style: solid;
-        }
-
-        .folder-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            opacity: 0.7;
-        }
-
-        .folder-text {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.95rem;
-            margin-bottom: 5px;
-        }
-
-        .folder-desc {
-            font-size: 0.8rem;
-            color: #6c757d;
-            line-height: 1.3;
-        }
-
-        .folder-selector.active .folder-text {
-            color: #155724;
-            font-weight: 600;
-        }
-
-        .folder-selector.active .folder-desc {
-            color: #155724;
-        }
-
-        .slider-container {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .slider-label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.95rem;
-        }
-
-        .slider-value {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        .slider {
-            width: 100%;
-            height: 10px;
-            border-radius: 5px;
-            background: #dee2e6;
-            outline: none;
-            -webkit-appearance: none;
-            position: relative;
-            touch-action: manipulation;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-            transition: all 0.2s ease;
-        }
-
-        .slider::-webkit-slider-thumb:active {
-            transform: scale(1.2);
-            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.6);
-        }
-
-        .slider::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-        }
-
-        .auto-button {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 15px;
-            width: 100%;
-            justify-content: center;
-            font-size: 0.95rem;
-            touch-action: manipulation;
-        }
-
-        .auto-button:active {
-            transform: scale(0.98);
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
-        }
-
-        .create-button {
-            background: linear-gradient(135deg, #27ae60, #229954);
-            color: white;
-            border: none;
-            padding: 20px 30px;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-            box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
-            touch-action: manipulation;
-        }
-
-        .create-button:active {
-            transform: scale(0.98);
-            box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
-        }
-
-        .create-button:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .progress-container {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            border: 1px solid #e9ecef;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background: #e9ecef;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3498db, #2980b9);
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 6px;
-        }
-
-        .progress-text {
-            text-align: center;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.95rem;
-        }
-
-        .result-container {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 15px;
-            text-align: center;
-        }
-
-        .result-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .result-text {
-            font-weight: 600;
-            color: #155724;
-            margin-bottom: 15px;
-        }
-
-        .download-button {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 16px 25px;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            touch-action: manipulation;
-        }
-
-        .download-button:active {
-            transform: scale(0.98);
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 15px;
-            font-size: 0.85rem;
-            color: #1565c0;
-            line-height: 1.4;
-        }
-
-        .file-count {
-            display: inline-block;
-            background: #fff3cd;
-            color: #856404;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-
-        /* Selection Mode Styles */
-        .selection-mode-container {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        .mode-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .mode-button {
-            flex: 1;
-            background: #e9ecef;
-            color: #6c757d;
-            border: none;
-            padding: 12px 15px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            touch-action: manipulation;
-        }
-
-        .mode-button.active {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-        }
-
-        .mode-button:active {
-            transform: scale(0.98);
-        }
-
-        .mode-description {
-            font-size: 0.85rem;
-            color: #6c757d;
-            text-align: center;
-            font-style: italic;
-        }
-
-        /* Template Styles */
-        .template-container {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-        }
-
-        .template-card {
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            touch-action: manipulation;
-        }
-
-        .template-card:hover {
-            border-color: #3498db;
-            background: #e3f2fd;
-        }
-
-        .template-card.active {
-            border-color: #27ae60;
-            background: #d4edda;
-            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
-        }
-
-        .template-card:active {
-            transform: scale(0.98);
-        }
-
-        .template-icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
-        }
-
-        .template-name {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-        }
-
-        .template-desc {
-            font-size: 0.75rem;
-            color: #6c757d;
-            line-height: 1.3;
-        }
-
-        .template-card.active .template-name {
-            color: #155724;
-        }
-
-        .template-card.active .template-desc {
-            color: #155724;
-        }
-
-        /* Caption Generator Styles */
-        .caption-generator-container {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-        }
-
-        .category-selector {
-            margin-bottom: 20px;
-        }
-
-        .category-label {
-            display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-
-        .category-select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            background: white;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #495057;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 20px;
-        }
-
-        .category-select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .keywords-container {
-            margin-bottom: 20px;
-        }
-
-        .keywords-label {
-            display: block;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-
-        .keywords-input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            background: white;
-            font-size: 0.9rem;
-            color: #495057;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        .keywords-input:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        .keywords-hint {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-top: 5px;
-            font-style: italic;
-        }
-
-        .generate-caption-button {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            color: white;
-            border: none;
-            padding: 16px 25px;
-            border-radius: 25px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 1rem;
-            box-shadow: 0 8px 20px rgba(155, 89, 182, 0.3);
-            touch-action: manipulation;
-        }
-
-        .generate-caption-button:active {
-            transform: scale(0.98);
-            box-shadow: 0 6px 15px rgba(155, 89, 182, 0.4);
-        }
-
-        .generate-caption-button:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .caption-result {
-            margin-top: 20px;
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid #e3f2fd;
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        .caption-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .caption-title {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 1rem;
-        }
-
-        .caption-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .regenerate-button, .copy-button {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            touch-action: manipulation;
-        }
-
-        .regenerate-button:active, .copy-button:active {
-            transform: scale(0.95);
-        }
-
-        .copy-button {
-            background: linear-gradient(135deg, #27ae60, #229954);
-        }
-
-        .caption-text {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #2c3e50;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            border: 1px solid #e9ecef;
-            margin-bottom: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .caption-stats {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .stat-badge {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .generating-animation {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .generating-animation::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmerGenerate 1.5s infinite;
-        }
-
-        @keyframes shimmerGenerate {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 480px) {
-            .container {
-                border-radius: 20px;
-                margin: 5px;
-            }
-            
-            .header {
-                padding: 20px 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.6rem;
-            }
-            
-            .content {
-                padding: 20px 15px;
-            }
-            
-            .step {
-                margin-bottom: 25px;
-            }
-            
-            .folder-selector {
-                padding: 15px;
-                min-height: 70px;
-            }
-            
-            .folder-icon {
-                font-size: 1.8rem;
-            }
-            
-            .slider-container {
-                padding: 15px;
-            }
-
-            .template-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .caption-generator-container {
-                padding: 15px;
-            }
-
-            .caption-actions {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .selection-buttons {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .folder-selector {
-                min-height: 80px;
-                padding: 15px;
-            }
-        }
-
-        /* Prevent zoom on input focus */
-        @media screen and (-webkit-min-device-pixel-ratio:0) {
-            select, textarea, input[type="text"], input[type="password"], 
-            input[type="datetime"], input[type="datetime-local"], 
-            input[type="date"], input[type="month"], input[type="time"], 
-            input[type="week"], input[type="number"], input[type="email"], 
-            input[type="url"], input[type="search"], input[type="tel"], 
-            input[type="color"] {
-                font-size: 16px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>🎬 M2M Reel Creator — Web</title>
+  <meta name="theme-color" content="#3498db" />
+  <style>
+    /* === Stili dal tuo mockup, condensati === */
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); margin:0; padding:10px; color:#333 }
+    .container{max-width:520px;margin:0 auto;background:rgba(255,255,255,.96);border-radius:24px;box-shadow:0 20px 40px rgba(0,0,0,.12);overflow:hidden}
+    .header{background:linear-gradient(135deg,#2c3e50,#3498db);color:#fff;padding:28px 22px;text-align:center}
+    .header h1{margin:0 0 8px;font-size:1.8rem}
+    .content{padding:22px}
+    .step{margin-bottom:22px}
+    .step-header{display:flex;align-items:center;gap:10px;font-weight:700;color:#2c3e50;margin-bottom:10px}
+    .step-number{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#3498db,#2980b9);box-shadow:0 4px 12px rgba(52,152,219,.3)}
+    .card{background:#f8f9fa;border:1px solid #e9ecef;border-radius:14px;padding:14px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .selector{border:2px dashed #dee2e6;border-radius:14px;padding:16px;text-align:center;background:#fff;cursor:pointer}
+    .selector.active{border-color:#27ae60;background:#d4edda}
+    .label{font-weight:600;color:#2c3e50;margin-bottom:6px}
+    .desc{font-size:.85rem;color:#6c757d}
+    .slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .pill{background:linear-gradient(135deg,#3498db,#2980b9);color:#fff;border-radius:999px;padding:4px 10px;font-weight:700;font-size:.9rem}
+    input[type=range]{width:100%}
+    .btn{border:0;border-radius:18px;padding:14px 18px;font-weight:800;color:#fff;cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:center}
+    .btn-primary{background:linear-gradient(135deg,#27ae60,#229954);box-shadow:0 8px 20px rgba(39,174,96,.28)}
+    .btn-secondary{background:linear-gradient(135deg,#f39c12,#e67e22)}
+    .muted{font-size:.85rem;color:#6c757d}
+    .progress{display:none;margin-top:12px}
+    .bar{height:12px;background:#e9ecef;border-radius:6px;overflow:hidden}
+    .fill{height:100%;width:0;background:linear-gradient(90deg,#3498db,#2980b9)}
+    .center{text-align:center}
+    .badge{display:inline-block;background:#fff3cd;color:#856404;border-radius:999px;padding:4px 10px;font-weight:700;font-size:.8rem}
+    .row{display:flex;gap:10px;align-items:center}
+    .template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    .template{border:2px solid #e9ecef;border-radius:12px;padding:10px;text-align:center;background:#fff;cursor:pointer}
+    .template.active{border-color:#27ae60;background:#d4edda}
+    .result{display:none;margin-top:14px;padding:16px;background:#d4edda;border:1px solid #c3e6cb;border-radius:14px}
+    .warn{background:#fff3f3;color:#842029;border:1px solid #f5c2c7;border-radius:12px;padding:10px;margin-top:10px}
+    .code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#f1f3f5;padding:10px;border-radius:8px;overflow:auto;font-size:.85rem}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎬 M2M Reel Creator</h1>
-            <p>Crea il tuo montaggio video perfetto in pochi click</p>
-        </div>
-
-        <div class="content">
-            <!-- Step 1: Folder Selection -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">1</div>
-                    <span>Seleziona la cartella con i tuoi video</span>
-                </div>
-                <div class="selection-buttons">
-                    <div class="folder-selector" id="folderSelector">
-                        <div class="folder-icon">📁</div>
-                        <div class="folder-text">Seleziona Cartella</div>
-                        <div class="folder-desc">Carica tutti i file da una cartella</div>
-                    </div>
-                    <div class="folder-selector" id="fileSelector">
-                        <div class="folder-icon">📄</div>
-                        <div class="folder-text">Seleziona File</div>
-                        <div class="folder-desc">Scegli manualmente i file</div>
-                    </div>
-                </div>
-                <div class="file-count" id="fileCount" style="display: none;">0 file multimediali trovati</div>
-                <input type="file" id="folderInput" webkitdirectory multiple accept="video/*,audio/*,image/*,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.mp3,.wav,.flac,.aac,.ogg,.jpg,.jpeg,.png,.gif,.bmp,.webp" style="display: none;">
-                <input type="file" id="fileInput" multiple accept="video/*,audio/*,image/*,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.mp3,.wav,.flac,.aac,.ogg,.jpg,.jpeg,.png,.gif,.bmp,.webp" style="display: none;">
-            </div>
-
-            <!-- Step 2: Selection Mode -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">2</div>
-                    <span>Modalità di selezione video</span>
-                </div>
-                <div class="selection-mode-container">
-                    <div class="mode-buttons">
-                        <button class="mode-button active" id="autoMode">
-                            🎲 Selezione Automatica
-                        </button>
-                        <button class="mode-button" id="manualMode">
-                            ✋ Selezione Manuale
-                        </button>
-                    </div>
-                    <div class="mode-description" id="modeDescription">
-                        L'app sceglierà automaticamente i video in modo casuale dalla tua cartella
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 3: Number of Videos -->
-            <div class="step" id="videoSelectionStep">
-                <div class="step-header">
-                    <div class="step-number">3</div>
-                    <span id="selectionStepTitle">Numero di file da selezionare</span>
-                </div>
-                
-                <div class="slider-container" id="autoModeContent">
-                    <div class="slider-header">
-                        <span class="slider-label">File da usare</span>
-                        <span class="slider-value" id="videoCountValue">10</span>
-                    </div>
-                    <input type="range" class="slider" id="videoCount" min="3" max="50" value="10" step="1">
-                    <div class="info-box">
-                        🎯 Il tool selezionerà automaticamente <span id="selectedVideoCount">10</span> file dalla tua raccolta
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 4: Template Selection -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">4</div>
-                    <span>Scegli un template</span>
-                </div>
-                <div class="template-container">
-                    <div class="template-grid">
-                        <div class="template-card active" data-template="custom">
-                            <div class="template-icon">⚙️</div>
-                            <div class="template-name">Personalizzato</div>
-                            <div class="template-desc">Imposta tu durata e clip</div>
-                        </div>
-                        <div class="template-card" data-template="viral">
-                            <div class="template-icon">🔥</div>
-                            <div class="template-name">Viral Reel</div>
-                            <div class="template-desc">60s • 3s clip • Ritmo veloce</div>
-                        </div>
-                        <div class="template-card" data-template="smooth">
-                            <div class="template-icon">✨</div>
-                            <div class="template-name">Smooth Flow</div>
-                            <div class="template-desc">90s • 5s clip • Transizioni morbide</div>
-                        </div>
-                        <div class="template-card" data-template="burst">
-                            <div class="template-icon">⚡</div>
-                            <div class="template-name">Quick Burst</div>
-                            <div class="template-desc">30s • 2s clip • Ritmo incalzante</div>
-                        </div>
-                        <div class="template-card" data-template="cinematic">
-                            <div class="template-icon">🎬</div>
-                            <div class="template-name">Cinematic</div>
-                            <div class="template-desc">120s • 7s clip • Stile cinematografico</div>
-                        </div>
-                        <div class="template-card" data-template="story">
-                            <div class="template-icon">📱</div>
-                            <div class="template-name">Story Mode</div>
-                            <div class="template-desc">45s • 4s clip • Perfetto per Stories</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 5: Video Duration -->
-            <div class="step" id="customSettingsStep">
-                <div class="step-header">
-                    <div class="step-number">5</div>
-                    <span>Durata del video finale</span>
-                </div>
-                <div class="slider-container">
-                    <div class="slider-header">
-                        <span class="slider-label">Durata totale</span>
-                        <span class="slider-value" id="totalDurationValue">60s</span>
-                    </div>
-                    <input type="range" class="slider" id="totalDuration" min="15" max="300" value="60" step="5">
-                    <div class="info-box">
-                        💡 Scegli quanto deve durare il tuo video finale (da 15 secondi a 5 minuti)
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 6: Clip Duration -->
-            <div class="step" id="clipDurationStep">
-                <div class="step-header">
-                    <div class="step-number">6</div>
-                    <span>Durata di ogni singolo clip</span>
-                </div>
-                <div class="slider-container">
-                    <div class="slider-header">
-                        <span class="slider-label">Durata clip</span>
-                        <span class="slider-value" id="clipDurationValue">5s</span>
-                    </div>
-                    <input type="range" class="slider" id="clipDuration" min="2" max="15" value="5" step="0.5">
-                    <button class="auto-button" id="autoCalculate">
-                        ✨ Calcola automaticamente
-                    </button>
-                    <div class="info-box">
-                        🎯 Il tool userà circa <span id="estimatedClips">12</span> clip per il tuo video
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 7: AI Caption Generator -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">7</div>
-                    <span>Genera caption virale con AI</span>
-                </div>
-                <div class="caption-generator-container">
-                    <div class="category-selector">
-                        <label class="category-label">🎯 Categoria del contenuto</label>
-                        <select class="category-select" id="categorySelect">
-                            <option value="motivazione">💪 Motivazione & Crescita Personale</option>
-                            <option value="lifestyle">✨ Lifestyle & Benessere</option>
-                            <option value="luxury">💎 Luxury & Successo</option>
-                            <option value="fitness">🏋️ Fitness & Salute</option>
-                            <option value="food">🍕 Food & Cucina</option>
-                            <option value="travel">✈️ Travel & Avventura</option>
-                            <option value="business">💼 Business & Imprenditoria</option>
-                            <option value="fashion">👗 Fashion & Style</option>
-                            <option value="tech">📱 Tech & Innovazione</option>
-                            <option value="arte">🎨 Arte & Creatività</option>
-                        </select>
-                    </div>
-                    
-                    <div class="keywords-container">
-                        <label class="keywords-label">🔥 Parole chiave aggiuntive (opzionale)</label>
-                        <input type="text" class="keywords-input" id="keywordsInput" placeholder="es: estate, vacanze, amici...">
-                        <div class="keywords-hint">Inserisci parole chiave separate da virgola per personalizzare la caption</div>
-                    </div>
-                    
-                    <button class="generate-caption-button" id="generateCaptionButton">
-                        🤖 Genera Caption Virale
-                    </button>
-                    
-                    <div class="caption-result" id="captionResult" style="display: none;">
-                        <div class="caption-header">
-                            <span class="caption-title">📝 La tua caption virale</span>
-                            <div class="caption-actions">
-                                <button class="regenerate-button" id="regenerateButton">🔄</button>
-                                <button class="copy-button" id="copyButton">📋</button>
-                            </div>
-                        </div>
-                        <div class="caption-text" id="captionText"></div>
-                        <div class="caption-stats">
-                            <span class="stat-badge">📊 <span id="captionLength">0</span> caratteri</span>
-                            <span class="stat-badge">🏷️ <span id="hashtagCount">0</span> hashtag</span>
-                            <span class="stat-badge">😊 <span id="emojiCount">0</span> emoji</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 8: Create Video -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">8</div>
-                    <span>Crea il tuo montaggio</span>
-                </div>
-                <button class="create-button" id="createButton">
-                    🚀 Crea Video Montaggio
-                </button>
-            </div>
-
-            <!-- Progress -->
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-text" id="progressText">Preparazione in corso...</div>
-            </div>
-
-            <!-- Result -->
-            <div class="result-container" id="resultContainer">
-                <div class="result-icon">🎉</div>
-                <div class="result-text">Il tuo video è pronto!</div>
-                <button class="download-button" id="downloadButton">
-                    📥 Scarica Video
-                </button>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>🎬 M2M Reel Creator</h1>
+      <div>Montaggio reale in-browser (Web ⟷ Mobile)</div>
     </div>
+    <div class="content">
+      <!-- STEP 1: selezione -->
+      <div class="step">
+        <div class="step-header"><div class="step-number">1</div><div>Carica i tuoi file</div></div>
+        <div class="grid2">
+          <label class="selector" id="chooseFiles">
+            <div class="label">Seleziona File</div>
+            <div class="desc">Video / Immagini / Audio</div>
+          </label>
+          <label class="selector" id="chooseFolder">
+            <div class="label">Seleziona Cartella</div>
+            <div class="desc">Richiede browser Chromium</div>
+          </label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div id="fileBadge" class="badge" style="display:none">0 file caricati</div>
+          <div class="muted" id="tip">Formati consigliati: .mp4, .mov, .webm, .mkv (video); .jpg/.png (immagini)</div>
+        </div>
+        <input id="fileInput" type="file" multiple accept="video/*,image/*,audio/*" hidden />
+        <input id="folderInput" type="file" webkitdirectory directory multiple accept="video/*,image/*,audio/*" hidden />
+      </div>
 
-    <script>
-        class VideoMontageCreator {
-            constructor() {
-                this.selectedFiles = [];
-                this.selectionMode = 'auto';
-                this.selectedTemplate = 'custom';
-                this.videoCount = 10;
-                this.totalDuration = 60;
-                this.clipDuration = 5;
-                this.currentCategory = 'motivazione';
-                this.currentKeywords = '';
-                
-                this.templates = {
-                    custom: { duration: 60, clipDuration: 5, name: 'Personalizzato' },
-                    viral: { duration: 60, clipDuration: 3, name: 'Viral Reel' },
-                    smooth: { duration: 90, clipDuration: 5, name: 'Smooth Flow' },
-                    burst: { duration: 30, clipDuration: 2, name: 'Quick Burst' },
-                    cinematic: { duration: 120, clipDuration: 7, name: 'Cinematic' },
-                    story: { duration: 45, clipDuration: 4, name: 'Story Mode' }
-                };
+      <!-- STEP 2: template -->
+      <div class="step">
+        <div class="step-header"><div class="step-number">2</div><div>Scegli un template</div></div>
+        <div class="template-grid">
+          <div class="template active" data-tmpl="custom">⚙️<div><b>Personalizzato</b></div><div class="muted">Imposti tu</div></div>
+          <div class="template" data-tmpl="viral">🔥<div><b>Viral Reel</b></div><div class="muted">60s • clip 3s</div></div>
+          <div class="template" data-tmpl="smooth">✨<div><b>Smooth Flow</b></div><div class="muted">90s • clip 5s</div></div>
+          <div class="template" data-tmpl="burst">⚡<div><b>Quick Burst</b></div><div class="muted">30s • clip 2s</div></div>
+          <div class="template" data-tmpl="cinematic">🎬<div><b>Cinematic</b></div><div class="muted">120s • clip 7s</div></div>
+          <div class="template" data-tmpl="story">📱<div><b>Story Mode</b></div><div class="muted">45s • clip 4s</div></div>
+        </div>
+      </div>
 
-                this.captionTemplates = {
-                    motivazione: [
-                        "🔥 Non mollare mai! Ogni giorno è una nuova opportunità per crescere e migliorare. Il successo arriva a chi non si arrende mai! 💪\n\n✨ Credi in te stesso e tutto diventa possibile\n🎯 Il tuo momento è ADESSO\n🚀 Trasforma i tuoi sogni in realtà\n\n#motivazione #successo #crescitapersonale #mindset #obiettivi #determinazione #ispirazione #nonmollaremai #believeinyourself #dreambig #hustle #grind #motivation #goals #success #mindsetmatters #nevergiveup #inspiration #personalgrowth #selfimprovement",
-                        "💎 La differenza tra chi ce la fa e chi no? La COSTANZA! Piccoli passi ogni giorno portano a grandi risultati 🏆\n\n🔥 Ogni sfida è un'opportunità\n⚡ La tua zona di comfort è il tuo nemico\n🎯 Fai quello che gli altri non fanno\n\n#motivazione #successo #costanza #disciplina #mindset #crescita #obiettivi #determinazione #hustle #grind #nevergiveup #believeinyourself #goals #inspiration #personaldevelopment #selfimprovement #mindsetshift #successmindset #motivation #dreambig",
-                        "🚀 STOP alle scuse! È il momento di AGIRE! Il tuo futuro dipende dalle decisioni che prendi OGGI 💪\n\n✨ Smetti di rimandare\n🔥 Inizia da dove sei\n🎯 Usa quello che hai\n⚡ Fai quello che puoi\n\n#motivazione #azione #noexcuses #successo #mindset #obiettivi #determinazione #crescitapersonale #hustle #grind #takeaction #justdoit #believeinyourself #goals #inspiration #selfimprovement #mindsetmatters #successmindset #motivation #dreambig"
-                    ],
-                    lifestyle: [
-                        "✨ La vita è troppo breve per non viverla al massimo! Ogni momento è prezioso, rendilo speciale 🌟\n\n🌸 Trova la bellezza nelle piccole cose\n☕ Goditi i momenti semplici\n🌅 Ogni giorno è un nuovo inizio\n💫 Crea ricordi indimenticabili\n\n#lifestyle #vita #benessere #felicità #momenti #semplicità #gratitudine #mindfulness #selfcare #wellness #happiness #life #moments #grateful #blessed #positivevibes #goodvibes #livelife #enjoythemoment #mindful",
-                        "🌿 Il segreto della felicità? Vivere nel presente e apprezzare quello che hai 💚\n\n✨ Rallenta e respira\n🌸 Trova il tuo equilibrio\n☀️ Sorridi di più\n🌺 Ama te stesso\n\n#lifestyle #benessere #mindfulness #equilibrio #felicità #selfcare #wellness #gratitudine #vita #momenti #pace #serenità #positivity #goodvibes #blessed #grateful #livewell #happiness #balance #selflove"
-                    ],
-                    luxury: [
-                        "💎 Il lusso non è quello che possiedi, ma come ti senti quando lo vivi. Elevati sempre! ✨\n\n🥂 Qualità sopra quantità\n👑 Trattati come meriti\n🌟 L'eleganza è un atteggiamento\n💫 Investi in te stesso\n\n#luxury #eleganza #qualità #stile #successo #lifestyle #classe #sofisticazione #excellence #quality #style #elegance #sophisticated #classy #luxurylife #success #mindset #selfworth #invest #treatyourself"
-                    ],
-                    fitness: [
-                        "💪 Il tuo corpo può farlo! È la tua mente che devi convincere. Supera i tuoi limiti ogni giorno! 🔥\n\n🏋️ Più forte di ieri\n⚡ Nessuna scusa\n🎯 Obiettivi chiari\n🏆 Risultati garantiti\n\n#fitness #allenamento #motivazione #palestra #salute #forza #resistenza #obiettivi #noexcuses #stronger #workout #gym #health #strength #training #fitnessmotivation #bodybuilding #muscle #gains #dedication"
-                    ],
-                    food: [
-                        "🍕 La vita è troppo breve per non gustare ogni boccone! Il cibo è amore, condividilo sempre ❤️\n\n👨‍🍳 Cucina con passione\n🌿 Ingredienti freschi\n🍽️ Condividi i momenti\n✨ Sapori autentici\n\n#food #cucina #sapori #passione #condivisione #ingredienti #ricette #cooking #foodie #delicious #tasty #homemade #fresh #authentic #flavors #foodlover #chef #kitchen #yummy #foodporn"
-                    ],
-                    travel: [
-                        "✈️ Il mondo è un libro e chi non viaggia ne legge solo una pagina! Esplora, scopri, vivi! 🌍\n\n🗺️ Nuove destinazioni\n📸 Ricordi indimenticabili\n🌅 Alba in luoghi magici\n🎒 Avventure infinite\n\n#travel #viaggio #mondo #esplorare #scoprire #destinazioni #ricordi #avventure #wanderlust #explore #adventure #journey #discover #world #memories #experiences #traveling #vacation #holiday #explore"
-                    ],
-                    business: [
-                        "💼 Il successo negli affari non è solo questione di soldi, ma di valore che crei per gli altri! 📈\n\n🎯 Vision chiara\n💡 Innovazione costante\n🤝 Relazioni solide\n🚀 Crescita sostenibile\n\n#business #successo #valore #vision #innovazione #relazioni #crescita #entrepreneur #startup #leadership #mindset #goals #hustle #businessmindset #success #growth #innovation #networking #leadership #entrepreneur"
-                    ],
-                    fashion: [
-                        "👗 La moda passa, lo stile rimane! Esprimi la tua personalità attraverso quello che indossi ✨\n\n💫 Stile personale\n🌟 Fiducia in se stessi\n🎨 Creatività nell'outfit\n👑 Eleganza senza tempo\n\n#fashion #stile #moda #personalità #outfit #eleganza #style #fashion #outfit #ootd #style #fashionista #trendy #chic #elegant #stylish #fashionable #look #clothing #accessories"
-                    ],
-                    tech: [
-                        "📱 La tecnologia è solo uno strumento. È l'uso che ne facciamo che fa la differenza! 🚀\n\n💡 Innovazione intelligente\n🔮 Futuro digitale\n⚡ Efficienza massima\n🌐 Connessioni globali\n\n#tech #tecnologia #innovazione #digitale #futuro #efficienza #technology #innovation #digital #future #ai #startup #coding #programming #software #hardware #gadgets #smartphone #computer #internet"
-                    ],
-                    arte: [
-                        "🎨 L'arte è l'espressione più pura dell'anima! Crea, ispira, emoziona! ✨\n\n🖌️ Creatività libera\n🌈 Colori dell'anima\n💫 Ispirazione infinita\n🎭 Emozioni pure\n\n#arte #creatività #ispirazione #emozioni #art #creativity #inspiration #artist #painting #drawing #design #creative #artistic #masterpiece #gallery #exhibition #culture #beauty #expression #imagination"
-                    ]
-                };
-                
-                this.initializeEventListeners();
-                this.updateEstimatedClips();
-            }
+      <!-- STEP 3: impostazioni -->
+      <div class="step card">
+        <div class="slider-row"><span class="label">Durata finale</span><span class="pill" id="totalOut">60s</span></div>
+        <input id="totalRange" type="range" min="15" max="180" step="5" value="60" />
+        <div class="slider-row" style="margin-top:10px"><span class="label">Durata clip</span><span class="pill" id="clipOut">4s</span></div>
+        <input id="clipRange" type="range" min="2" max="15" step="0.5" value="4" />
+        <div class="slider-row" style="margin-top:10px"><span class="label">Clip da usare</span><span class="pill" id="countOut">10</span></div>
+        <input id="countRange" type="range" min="3" max="50" step="1" value="10" />
+        <div class="muted" style="margin-top:8px">Stima clip: <b id="estClips">15</b></div>
+      </div>
 
-            initializeEventListeners() {
-                // Folder and file selection
-                document.getElementById('folderSelector').addEventListener('click', () => {
-                    document.getElementById('folderInput').click();
-                });
+      <!-- STEP 4: genera -->
+      <div class="step">
+        <div class="step-header"><div class="step-number">4</div><div>Crea il tuo montaggio</div></div>
+        <button class="btn btn-primary" id="startBtn">🚀 Crea Video</button>
+        <div class="progress" id="progressBox">
+          <div class="bar"><div class="fill" id="progressFill"></div></div>
+          <div class="center muted" id="progressText">Preparazione…</div>
+        </div>
+        <div class="result" id="resultBox">
+          <div class="center" style="font-size:2rem">🎉</div>
+          <div class="center" style="font-weight:700;color:#155724">Video pronto!</div>
+          <div class="center" style="margin-top:10px">
+            <a id="downloadLink" class="btn btn-secondary" download>📥 Scarica</a>
+          </div>
+        </div>
+        <div class="warn" id="compatNote" style="display:none">
+          Suggerimento: su iOS/Safari il formato prodotto è <b>WebM</b>. Per MP4/H.264 integreremo la versione nativa (Capacitor + FFmpegKit) o un backend FFmpeg.
+        </div>
+      </div>
 
-                document.getElementById('fileSelector').addEventListener('click', () => {
-                    document.getElementById('fileInput').click();
-                });
+      <!-- Diagnostica -->
+      <details class="step card">
+        <summary><b>Dettagli tecnici</b></summary>
+        <div class="muted" style="margin-top:8px">Questa versione fa il rendering via <b>Canvas + MediaRecorder</b> (stream video) e <b>WebAudio</b> (stream audio) concatenando i clip e applicando ridimensionamento 9:16. È pensata per girare 100% in-browser senza server.</div>
+        <div class="code" id="log"></div>
+      </details>
 
-                document.getElementById('folderInput').addEventListener('change', (e) => {
-                    this.handleFileSelection(e, 'folder');
-                });
+      <!-- Elementi nascosti per il rendering -->
+      <video id="hiddenVideo" crossorigin="anonymous" playsinline muted style="display:none"></video>
+      <canvas id="stage" width="1080" height="1920" style="display:none"></canvas>
+    </div>
+  </div>
 
-                document.getElementById('fileInput').addEventListener('change', (e) => {
-                    this.handleFileSelection(e, 'files');
-                });
+  <script>
+    // === Utility log ===
+    const $ = (sel) => document.querySelector(sel);
+    const logBox = $('#log');
+    const log = (...args) => { logBox.textContent += args.join(' ') + "\n"; };
 
-                // Mode selection
-                document.getElementById('autoMode').addEventListener('click', () => {
-                    this.setSelectionMode('auto');
-                });
+    // Stato app
+    const state = {
+      files: [], // File[]
+      picked: [], // oggetti clip scelti
+      template: 'custom',
+      total: 60,
+      perClip: 4,
+      count: 10,
+      fps: 30,
+      w: 1080, h: 1920,
+      crossfade: 0.4,
+    };
 
-                document.getElementById('manualMode').addEventListener('click', () => {
-                    this.setSelectionMode('manual');
-                });
+    // UI wiring
+    $('#chooseFiles').onclick = () => $('#fileInput').click();
+    $('#chooseFolder').onclick = () => $('#folderInput').click();
+    $('#fileInput').onchange = (e) => ingest(Array.from(e.target.files));
+    $('#folderInput').onchange = (e) => ingest(Array.from(e.target.files));
 
-                // Sliders
-                document.getElementById('videoCount').addEventListener('input', (e) => {
-                    this.videoCount = parseInt(e.target.value);
-                    document.getElementById('videoCountValue').textContent = this.videoCount;
-                    document.getElementById('selectedVideoCount').textContent = this.videoCount;
-                });
+    document.querySelectorAll('.template').forEach(el => {
+      el.onclick = () => {
+        document.querySelectorAll('.template').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
+        state.template = el.dataset.tmpl;
+        applyTemplate();
+      }
+    });
 
-                document.getElementById('totalDuration').addEventListener('input', (e) => {
-                    this.totalDuration = parseInt(e.target.value);
-                    document.getElementById('totalDurationValue').textContent = this.totalDuration + 's';
-                    this.updateEstimatedClips();
-                });
+    $('#totalRange').oninput = (e) => { state.total = +e.target.value; $('#totalOut').textContent = state.total + 's'; estimate(); };
+    $('#clipRange').oninput = (e) => { state.perClip = +e.target.value; $('#clipOut').textContent = state.perClip + 's'; estimate(); };
+    $('#countRange').oninput = (e) => { state.count = +e.target.value; $('#countOut').textContent = state.count; estimate(); };
 
-                document.getElementById('clipDuration').addEventListener('input', (e) => {
-                    this.clipDuration = parseFloat(e.target.value);
-                    document.getElementById('clipDurationValue').textContent = this.clipDuration + 's';
-                    this.updateEstimatedClips();
-                });
+    $('#startBtn').onclick = start;
 
-                // Auto calculate button
-                document.getElementById('autoCalculate').addEventListener('click', () => {
-                    this.autoCalculateClipDuration();
-                });
+    function ingest(files){
+      // Filtra solo media
+      const mm = files.filter(f => /^(video|image|audio)\//.test(f.type) || /\.(mp4|mov|webm|mkv|m4v|jpg|jpeg|png|gif|bmp|webp|mp3|wav)$/i.test(f.name));
+      state.files = mm;
+      $('#fileBadge').style.display = 'inline-block';
+      $('#fileBadge').textContent = `${mm.length} file caricati`;
+      log('Caricati', mm.length, 'file');
+    }
 
-                // Template selection
-                document.querySelectorAll('.template-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        this.selectTemplate(card.dataset.template);
-                    });
-                });
+    function applyTemplate(){
+      const t = state.template;
+      if(t==='viral'){ state.total=60; state.perClip=3; }
+      else if(t==='smooth'){ state.total=90; state.perClip=5; }
+      else if(t==='burst'){ state.total=30; state.perClip=2; }
+      else if(t==='cinematic'){ state.total=120; state.perClip=7; }
+      else if(t==='story'){ state.total=45; state.perClip=4; }
+      // custom: non tocco
+      $('#totalRange').value = state.total; $('#totalOut').textContent = state.total+'s';
+      $('#clipRange').value = state.perClip; $('#clipOut').textContent = state.perClip+'s';
+      estimate();
+    }
 
-                // Caption generator
-                document.getElementById('categorySelect').addEventListener('change', (e) => {
-                    this.currentCategory = e.target.value;
-                });
+    function estimate(){
+      const est = Math.ceil(state.total / state.perClip);
+      $('#estClips').textContent = est;
+    }
 
-                document.getElementById('keywordsInput').addEventListener('input', (e) => {
-                    this.currentKeywords = e.target.value;
-                });
+    function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 
-                document.getElementById('generateCaptionButton').addEventListener('click', () => {
-                    this.generateCaption();
-                });
+    async function start(){
+      if(state.files.length===0){ alert('Carica prima dei file.'); return; }
+      // Scegli clip casuali
+      const pool = shuffle([...state.files]).slice(0, Math.min(state.count, state.files.length));
+      state.picked = pool.map((f,i)=>({ file:f, url:URL.createObjectURL(f), kind: f.type.split('/')[0], name:f.name }));
+      log('Selezionati', state.picked.length, 'clip');
 
-                document.getElementById('regenerateButton').addEventListener('click', () => {
-                    this.generateCaption();
-                });
+      $('#progressBox').style.display='block';
+      $('#resultBox').style.display='none';
+      updateProgress(0,'Preparazione…');
 
-                document.getElementById('copyButton').addEventListener('click', () => {
-                    this.copyCaption();
-                });
+      try{
+        const blob = await renderMontage(state);
+        const url = URL.createObjectURL(blob);
+        const a = $('#downloadLink');
+        a.href = url;
+        const stamp = new Date().toISOString().replace(/[:.]/g,'');
+        a.download = `M2M_reel_${stamp}.${blob.type.includes('webm')?'webm':'mp4'}`;
+        $('#resultBox').style.display='block';
+        $('#compatNote').style.display='block';
+        updateProgress(100,'Fatto');
+        $('#progressBox').style.display='none';
+      } catch(err){
+        console.error(err);
+        log('ERRORE:', err.message||err);
+        alert('Qualcosa è andato storto durante il rendering. Vedi Dettagli tecnici.');
+        $('#progressBox').style.display='none';
+      }
+    }
 
-                // Create button
-                document.getElementById('createButton').addEventListener('click', () => {
-                    this.createVideo();
-                });
+    function updateProgress(pct,text){
+      $('#progressFill').style.width = pct+'%';
+      $('#progressText').textContent = text || '';
+    }
 
-                // Download button
-                document.getElementById('downloadButton').addEventListener('click', () => {
-                    this.downloadVideo();
-                });
-            }
+    // === Rendering su Canvas + MediaRecorder ===
+    async function renderMontage(cfg){
+      const { picked, w, h, fps, perClip, total, crossfade } = cfg;
+      const estClips = Math.max(1, Math.min(picked.length, Math.ceil(total/perClip)));
+      const timeline = picked.slice(0, estClips);
 
-            handleFileSelection(event, type) {
-                const files = Array.from(event.target.files);
-                
-                // Filter multimedia files
-                const multimediaFiles = files.filter(file => {
-                    const isVideo = file.type.startsWith('video/') || 
-                        /\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv)$/i.test(file.name);
-                    const isAudio = file.type.startsWith('audio/') || 
-                        /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(file.name);
-                    const isImage = file.type.startsWith('image/') || 
-                        /\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff)$/i.test(file.name);
-                    
-                    return isVideo || isAudio || isImage;
-                });
+      const cvs = $('#stage');
+      const ctx = cvs.getContext('2d');
+      const tmpVideoA = $('#hiddenVideo');
+      const tmpVideoB = document.createElement('video'); tmpVideoB.muted = true; tmpVideoB.playsinline = true; tmpVideoB.style.display='none';
+      document.body.appendChild(tmpVideoB);
 
-                this.selectedFiles = multimediaFiles;
-                
-                // Count by type
-                const videoCount = multimediaFiles.filter(file => 
-                    file.type.startsWith('video/') || 
-                    /\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv)$/i.test(file.name)
-                ).length;
-                
-                const audioCount = multimediaFiles.filter(file => 
-                    file.type.startsWith('audio/') || 
-                    /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(file.name)
-                ).length;
-                
-                const imageCount = multimediaFiles.filter(file => 
-                    file.type.startsWith('image/') || 
-                    /\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff)$/i.test(file.name)
-                ).length;
-                
-                const folderSelector = document.getElementById('folderSelector');
-                const fileSelector = document.getElementById('fileSelector');
-                const fileCount = document.getElementById('fileCount');
-                
-                if (multimediaFiles.length > 0) {
-                    // Reset both selectors
-                    folderSelector.classList.remove('active');
-                    fileSelector.classList.remove('active');
-                    
-                    // Activate the used selector
-                    if (type === 'folder') {
-                        folderSelector.classList.add('active');
-                        folderSelector.querySelector('.folder-text').textContent = 'Cartella Caricata!';
-                    } else {
-                        fileSelector.classList.add('active');
-                        fileSelector.querySelector('.folder-text').textContent = 'File Caricati!';
-                    }
-                    
-                    // Show file count with breakdown
-                    let countText = `${multimediaFiles.length} file trovati`;
-                    if (videoCount > 0 || audioCount > 0 || imageCount > 0) {
-                        const breakdown = [];
-                        if (videoCount > 0) breakdown.push(`${videoCount} video`);
-                        if (audioCount > 0) breakdown.push(`${audioCount} audio`);
-                        if (imageCount > 0) breakdown.push(`${imageCount} immagini`);
-                        countText += ` (${breakdown.join(', ')})`;
-                    }
-                    
-                    fileCount.textContent = countText;
-                    fileCount.style.display = 'inline-block';
-                    
-                    // Enable create button
-                    document.getElementById('createButton').disabled = false;
-                    
-                    // Update video count slider max value
-                    const videoCountSlider = document.getElementById('videoCount');
-                    videoCountSlider.max = Math.max(3, multimediaFiles.length);
-                    if (this.videoCount > multimediaFiles.length) {
-                        this.videoCount = Math.min(10, multimediaFiles.length);
-                        videoCountSlider.value = this.videoCount;
-                        document.getElementById('videoCountValue').textContent = this.videoCount;
-                        document.getElementById('selectedVideoCount').textContent = this.videoCount;
-                    }
-                } else {
-                    alert('Nessun file multimediale trovato! Supportati: video, audio, immagini');
-                }
-            }
+      // WebAudio per portare l'audio nel MediaRecorder
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = ac.createMediaStreamDestination();
 
-            setSelectionMode(mode) {
-                this.selectionMode = mode;
-                
-                // Update button states
-                document.querySelectorAll('.mode-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                if (mode === 'auto') {
-                    document.getElementById('autoMode').classList.add('active');
-                    document.getElementById('modeDescription').textContent = 
-                        "L'app sceglierà automaticamente i video in modo casuale dalla tua cartella";
-                } else {
-                    document.getElementById('manualMode').classList.add('active');
-                    document.getElementById('modeDescription').textContent = 
-                        "Scegli manualmente quali video includere nel montaggio";
-                }
-            }
+      // Stream video dal canvas
+      const canvasStream = cvs.captureStream(fps);
+      // Uniamo traccia audio (quando presente) allo stream del canvas
+      const mixed = new MediaStream([...canvasStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
 
-            selectTemplate(templateName) {
-                this.selectedTemplate = templateName;
-                
-                // Update template cards
-                document.querySelectorAll('.template-card').forEach(card => {
-                    card.classList.remove('active');
-                });
-                document.querySelector(`[data-template="${templateName}"]`).classList.add('active');
-                
-                // Update settings based on template
-                const template = this.templates[templateName];
-                if (templateName !== 'custom') {
-                    this.totalDuration = template.duration;
-                    this.clipDuration = template.clipDuration;
-                    
-                    document.getElementById('totalDuration').value = template.duration;
-                    document.getElementById('totalDurationValue').textContent = template.duration + 's';
-                    document.getElementById('clipDuration').value = template.clipDuration;
-                    document.getElementById('clipDurationValue').textContent = template.clipDuration + 's';
-                    
-                    this.updateEstimatedClips();
-                }
-                
-                // Show/hide custom settings
-                const customStep = document.getElementById('customSettingsStep');
-                const clipStep = document.getElementById('clipDurationStep');
-                
-                if (templateName === 'custom') {
-                    customStep.style.display = 'block';
-                    clipStep.style.display = 'block';
-                } else {
-                    customStep.style.display = 'none';
-                    clipStep.style.display = 'none';
-                }
-            }
+      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : (
+                   MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm');
+      const rec = new MediaRecorder(mixed, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
 
-            updateEstimatedClips() {
-                const estimatedClips = Math.ceil(this.totalDuration / this.clipDuration);
-                document.getElementById('estimatedClips').textContent = estimatedClips;
-            }
+      const chunks = [];
+      rec.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
+      const done = new Promise(res => { rec.onstop = () => res(new Blob(chunks, { type: mime })); });
 
-            autoCalculateClipDuration() {
-                const optimalClipDuration = this.totalDuration / this.videoCount;
-                this.clipDuration = Math.max(2, Math.min(15, optimalClipDuration));
-                
-                document.getElementById('clipDuration').value = this.clipDuration;
-                document.getElementById('clipDurationValue').textContent = this.clipDuration.toFixed(1) + 's';
-                this.updateEstimatedClips();
-                
-                // Show feedback
-                const button = document.getElementById('autoCalculate');
-                const originalText = button.innerHTML;
-                button.innerHTML = '✅ Calcolato!';
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                }, 2000);
-            }
+      // Helper: carica <video> per file
+      const makeVideoEl = async (clip) => new Promise((resolve,reject)=>{
+        const v = document.createElement('video');
+        v.src = clip.url; v.crossOrigin = 'anonymous'; v.preload='auto'; v.playsinline=true; v.muted=true; // audio gestito via WebAudio
+        v.onloadedmetadata = ()=> resolve(v);
+        v.onerror = (e)=> reject(new Error('Impossibile caricare '+clip.name));
+      });
 
-            generateCaption() {
-                const button = document.getElementById('generateCaptionButton');
-                const resultContainer = document.getElementById('captionResult');
-                
-                // Show loading state
-                button.classList.add('generating-animation');
-                button.innerHTML = '🤖 Generando...';
-                button.disabled = true;
-                
-                setTimeout(() => {
-                    // Get random caption from selected category
-                    const categoryTemplates = this.captionTemplates[this.currentCategory] || this.captionTemplates.motivazione;
-                    const randomCaption = categoryTemplates[Math.floor(Math.random() * categoryTemplates.length)];
-                    
-                    // Customize with keywords if provided
-                    let finalCaption = randomCaption;
-                    if (this.currentKeywords.trim()) {
-                        const keywords = this.currentKeywords.split(',').map(k => k.trim()).filter(k => k);
-                        if (keywords.length > 0) {
-                            finalCaption += `\n\n🔥 ${keywords.join(' • ')}`;
-                        }
-                    }
-                    
-                    // Display caption
-                    document.getElementById('captionText').textContent = finalCaption;
-                    
-                    // Update stats
-                    const charCount = finalCaption.length;
-                    const hashtagCount = (finalCaption.match(/#\w+/g) || []).length;
-                    const emojiCount = (finalCaption.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu) || []).length;
-                    
-                    document.getElementById('captionLength').textContent = charCount;
-                    document.getElementById('hashtagCount').textContent = hashtagCount;
-                    document.getElementById('emojiCount').textContent = emojiCount;
-                    
-                    // Show result
-                    resultContainer.style.display = 'block';
-                    resultContainer.scrollIntoView({ behavior: 'smooth' });
-                    
-                    // Reset button
-                    button.classList.remove('generating-animation');
-                    button.innerHTML = '🤖 Genera Caption Virale';
-                    button.disabled = false;
-                }, 2000);
-            }
+      // Disegna frame scalando e croppando in 9:16 (cover)
+      function drawCover(video){
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const targetR = w/h; const srcR = vw/vh;
+        let dw, dh, dx, dy;
+        if(srcR > targetR){ // troppo largo → taglio ai lati
+          dh = h; dw = h*srcR; dx = (w-dw)/2; dy = 0;
+        } else { // troppo alto → taglio sopra/sotto
+          dw = w; dh = w/srcR; dx = 0; dy = (h-dh)/2;
+        }
+        ctx.drawImage(video, dx, dy, dw, dh);
+      }
 
-            copyCaption() {
-                const captionText = document.getElementById('captionText').textContent;
-                
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(captionText).then(() => {
-                        this.showCopyFeedback();
-                    });
-                } else {
-                    // Fallback for older browsers
-                    const textArea = document.createElement('textarea');
-                    textArea.value = captionText;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    this.showCopyFeedback();
-                }
-            }
+      // Carica tutti i video necessari (immagini vengono trasformate in clip video statici)
+      updateProgress(10,'Caricamento clip…');
+      const items = [];
+      for(const clip of timeline){
+        if(clip.kind==='image'){
+          const img = new Image(); img.src = clip.url; await img.decode();
+          items.push({ type:'image', el: img, dur: perClip });
+        } else if(clip.kind==='audio'){
+          // visual filler nero, audio riprodotto
+          items.push({ type:'audio', el: clip, dur: perClip });
+        } else {
+          const v = await makeVideoEl(clip);
+          items.push({ type:'video', el: v, dur: Math.min(perClip, Math.max(0.5, v.duration || perClip)) });
+        }
+      }
 
-            showCopyFeedback() {
-                const button = document.getElementById('copyButton');
-                const originalText = button.innerHTML;
-                button.innerHTML = '✅';
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                }, 2000);
-            }
+      // Prepara audio chain: useremo una sola sorgente alla volta per semplicità
+      let currentSource = null;
+      const connectAudio = (mediaEl) => {
+        try{
+          if(currentSource) currentSource.disconnect();
+          const src = ac.createMediaElementSource(mediaEl);
+          src.connect(dest);
+          currentSource = src;
+        }catch(err){ log('Audio non collegabile (probabile CORS o clip senza audio):', err.message||err); }
+      };
 
-            createVideo() {
-                if (this.selectedFiles.length === 0) {
-                    alert('Seleziona prima una cartella con i video!');
-                    return;
-                }
-                
-                const progressContainer = document.getElementById('progressContainer');
-                const progressFill = document.getElementById('progressFill');
-                const progressText = document.getElementById('progressText');
-                const resultContainer = document.getElementById('resultContainer');
-                
-                // Show progress
-                progressContainer.style.display = 'block';
-                progressContainer.scrollIntoView({ behavior: 'smooth' });
-                
-                // Simulate video creation process
-                const steps = [
-                    'Analizzando i video...',
-                    'Selezionando i migliori clip...',
-                    'Applicando il template...',
-                    'Creando le transizioni...',
-                    'Ottimizzando la qualità...',
-                    'Finalizzando il montaggio...'
-                ];
-                
-                let currentStep = 0;
-                const interval = setInterval(() => {
-                    const progress = ((currentStep + 1) / steps.length) * 100;
-                    progressFill.style.width = progress + '%';
-                    progressText.textContent = steps[currentStep];
-                    
-                    currentStep++;
-                    
-                    if (currentStep >= steps.length) {
-                        clearInterval(interval);
-                        
-                        // Show result
-                        setTimeout(() => {
-                            progressContainer.style.display = 'none';
-                            resultContainer.style.display = 'block';
-                            resultContainer.scrollIntoView({ behavior: 'smooth' });
-                        }, 1000);
-                    }
-                }, 1500);
-            }
+      // Start recorder
+      rec.start(1000);
 
-            downloadVideo() {
-                // Create a demo video file (in a real app, this would be the actual video)
-                const demoContent = `M2M Reel Creator - Video Montaggio
-                
-Template: ${this.templates[this.selectedTemplate].name}
-Durata: ${this.totalDuration}s
-Clip Duration: ${this.clipDuration}s
-Video utilizzati: ${this.videoCount}
-                
-Questo è un prototipo. In una versione completa, qui verrebbe scaricato il video montato.`;
-                
-                const blob = new Blob([demoContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'M2M_Reel_Montaggio.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                // Show feedback
-                const button = document.getElementById('downloadButton');
-                const originalText = button.innerHTML;
-                button.innerHTML = '✅ Scaricato!';
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                }, 3000);
-            }
+      // Timeline rendering
+      cvs.width = w; cvs.height = h; ctx.fillStyle = '#000';
+
+      let tAccum = 0;
+      for(let i=0;i<items.length;i++){
+        const part = items[i];
+        const next = items[i+1];
+        updateProgress(10 + Math.round((i/items.length)*80), `Rendering clip ${i+1}/${items.length}`);
+
+        if(part.type==='video'){
+          const v = part.el; v.currentTime = 0; await v.play().catch(()=>{});
+          connectAudio(v);
+          const tEnd = perClip;
+          const startTs = performance.now();
+
+          // disegno frame-by-frame per tEnd secondi
+          await new Promise((resolve)=>{
+            const draw = () => {
+              const elapsed = (performance.now()-startTs)/1000;
+              ctx.fillRect(0,0,w,h);
+              drawCover(v);
+
+              // crossfade semplice con prossimo video negli ultimi X secondi
+              if(next && next.type==='video' && (tEnd - elapsed) <= crossfade){
+                const alpha = Math.min(1, Math.max(0, (crossfade - (tEnd - elapsed)) / crossfade));
+                ctx.save(); ctx.globalAlpha = alpha;
+                // preload next video
+                if(!next.el.prepared){ next.el.prepared = true; next.el.currentTime = 0; next.el.play().catch(()=>{}); }
+                drawCover(next.el);
+                ctx.restore();
+              }
+
+              if(elapsed < tEnd){ requestAnimationFrame(draw); }
+              else { v.pause(); resolve(); }
+            };
+            requestAnimationFrame(draw);
+          });
+        }
+        else if(part.type==='image'){
+          const img = part.el; const tEnd = perClip; const startTs = performance.now();
+          await new Promise((resolve)=>{
+            const draw = () => {
+              const elapsed = (performance.now()-startTs)/1000;
+              ctx.fillRect(0,0,w,h);
+              // draw image cover
+              const ir = img.width/img.height; const tr = w/h;
+              let dw,dh,dx,dy; if(ir>tr){ dh=h; dw=h*ir; dx=(w-dw)/2; dy=0; } else { dw=w; dh=w/ir; dx=0; dy=(h-dh)/2; }
+              ctx.drawImage(img, dx,dy,dw,dh);
+              if(elapsed < tEnd){ requestAnimationFrame(draw); } else resolve();
+            };
+            requestAnimationFrame(draw);
+          });
+        }
+        else if(part.type==='audio'){
+          // frame nero + audio
+          ctx.fillRect(0,0,w,h);
+          const aud = new Audio(part.file ? URL.createObjectURL(part.file) : part.el.url);
+          aud.crossOrigin='anonymous'; aud.loop=false; aud.currentTime=0; await aud.play().catch(()=>{});
+          connectAudio(aud);
+          await new Promise(res=> setTimeout(res, perClip*1000));
+          aud.pause();
         }
 
-        // Initialize the app when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new VideoMontageCreator();
-        });
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976d7c2d54afea35',t:'MTc1NjQ4NTU3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+        tAccum += perClip;
+        if(tAccum >= total) break;
+      }
+
+      // stop recorder
+      rec.stop();
+      await ac.close().catch(()=>{});
+      const blob = await done;
+      // cleanup
+      try{ tmpVideoA.pause(); tmpVideoB.pause(); tmpVideoB.remove(); }catch{}
+      return blob;
+    }
+  </script>
+</body>
 </html>
 
