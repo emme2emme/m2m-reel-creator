@@ -147,6 +147,13 @@
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
         }
 
+        .selection-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
         .folder-selector {
             position: relative;
             background: #f8f9fa;
@@ -156,7 +163,7 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 80px;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -186,14 +193,25 @@
         }
 
         .folder-text {
-            font-weight: 500;
-            color: #6c757d;
+            font-weight: 600;
+            color: #2c3e50;
             font-size: 0.95rem;
+            margin-bottom: 5px;
+        }
+
+        .folder-desc {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.3;
         }
 
         .folder-selector.active .folder-text {
             color: #155724;
             font-weight: 600;
+        }
+
+        .folder-selector.active .folder-desc {
+            color: #155724;
         }
 
         .slider-container {
@@ -792,6 +810,16 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .selection-buttons {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .folder-selector {
+                min-height: 80px;
+                padding: 15px;
+            }
         }
 
         /* Prevent zoom on input focus */
@@ -821,12 +849,21 @@
                     <div class="step-number">1</div>
                     <span>Seleziona la cartella con i tuoi video</span>
                 </div>
-                <div class="folder-selector" id="folderSelector">
-                    <div class="folder-icon">📁</div>
-                    <div class="folder-text">Tocca per scegliere la cartella</div>
-                    <div class="file-count" id="fileCount" style="display: none;">0 video trovati</div>
+                <div class="selection-buttons">
+                    <div class="folder-selector" id="folderSelector">
+                        <div class="folder-icon">📁</div>
+                        <div class="folder-text">Seleziona Cartella</div>
+                        <div class="folder-desc">Carica tutti i file da una cartella</div>
+                    </div>
+                    <div class="folder-selector" id="fileSelector">
+                        <div class="folder-icon">📄</div>
+                        <div class="folder-text">Seleziona File</div>
+                        <div class="folder-desc">Scegli manualmente i file</div>
+                    </div>
                 </div>
-                <input type="file" id="folderInput" webkitdirectory multiple style="display: none;">
+                <div class="file-count" id="fileCount" style="display: none;">0 file multimediali trovati</div>
+                <input type="file" id="folderInput" webkitdirectory multiple accept="video/*,audio/*,image/*,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.mp3,.wav,.flac,.aac,.ogg,.jpg,.jpeg,.png,.gif,.bmp,.webp" style="display: none;">
+                <input type="file" id="fileInput" multiple accept="video/*,audio/*,image/*,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.mp3,.wav,.flac,.aac,.ogg,.jpg,.jpeg,.png,.gif,.bmp,.webp" style="display: none;">
             </div>
 
             <!-- Step 2: Selection Mode -->
@@ -854,17 +891,17 @@
             <div class="step" id="videoSelectionStep">
                 <div class="step-header">
                     <div class="step-number">3</div>
-                    <span id="selectionStepTitle">Numero di video da selezionare</span>
+                    <span id="selectionStepTitle">Numero di file da selezionare</span>
                 </div>
                 
                 <div class="slider-container" id="autoModeContent">
                     <div class="slider-header">
-                        <span class="slider-label">Video da usare</span>
+                        <span class="slider-label">File da usare</span>
                         <span class="slider-value" id="videoCountValue">10</span>
                     </div>
                     <input type="range" class="slider" id="videoCount" min="3" max="50" value="10" step="1">
                     <div class="info-box">
-                        🎯 Il tool selezionerà automaticamente <span id="selectedVideoCount">10</span> video dalla tua cartella
+                        🎯 Il tool selezionerà automaticamente <span id="selectedVideoCount">10</span> file dalla tua raccolta
                     </div>
                 </div>
             </div>
@@ -1093,13 +1130,21 @@
             }
 
             initializeEventListeners() {
-                // Folder selection
+                // Folder and file selection
                 document.getElementById('folderSelector').addEventListener('click', () => {
                     document.getElementById('folderInput').click();
                 });
 
+                document.getElementById('fileSelector').addEventListener('click', () => {
+                    document.getElementById('fileInput').click();
+                });
+
                 document.getElementById('folderInput').addEventListener('change', (e) => {
-                    this.handleFolderSelection(e);
+                    this.handleFileSelection(e, 'folder');
+                });
+
+                document.getElementById('fileInput').addEventListener('change', (e) => {
+                    this.handleFileSelection(e, 'files');
                 });
 
                 // Mode selection
@@ -1174,28 +1219,84 @@
                 });
             }
 
-            handleFolderSelection(event) {
+            handleFileSelection(event, type) {
                 const files = Array.from(event.target.files);
-                const videoFiles = files.filter(file => 
-                    file.type.startsWith('video/') || 
-                    /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(file.name)
-                );
+                
+                // Filter multimedia files
+                const multimediaFiles = files.filter(file => {
+                    const isVideo = file.type.startsWith('video/') || 
+                        /\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv)$/i.test(file.name);
+                    const isAudio = file.type.startsWith('audio/') || 
+                        /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(file.name);
+                    const isImage = file.type.startsWith('image/') || 
+                        /\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff)$/i.test(file.name);
+                    
+                    return isVideo || isAudio || isImage;
+                });
 
-                this.selectedFiles = videoFiles;
+                this.selectedFiles = multimediaFiles;
+                
+                // Count by type
+                const videoCount = multimediaFiles.filter(file => 
+                    file.type.startsWith('video/') || 
+                    /\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv)$/i.test(file.name)
+                ).length;
+                
+                const audioCount = multimediaFiles.filter(file => 
+                    file.type.startsWith('audio/') || 
+                    /\.(mp3|wav|flac|aac|ogg|wma|m4a)$/i.test(file.name)
+                ).length;
+                
+                const imageCount = multimediaFiles.filter(file => 
+                    file.type.startsWith('image/') || 
+                    /\.(jpg|jpeg|png|gif|bmp|webp|svg|tiff)$/i.test(file.name)
+                ).length;
                 
                 const folderSelector = document.getElementById('folderSelector');
+                const fileSelector = document.getElementById('fileSelector');
                 const fileCount = document.getElementById('fileCount');
                 
-                if (videoFiles.length > 0) {
-                    folderSelector.classList.add('active');
-                    folderSelector.querySelector('.folder-text').textContent = 'Cartella selezionata!';
-                    fileCount.textContent = `${videoFiles.length} video trovati`;
+                if (multimediaFiles.length > 0) {
+                    // Reset both selectors
+                    folderSelector.classList.remove('active');
+                    fileSelector.classList.remove('active');
+                    
+                    // Activate the used selector
+                    if (type === 'folder') {
+                        folderSelector.classList.add('active');
+                        folderSelector.querySelector('.folder-text').textContent = 'Cartella Caricata!';
+                    } else {
+                        fileSelector.classList.add('active');
+                        fileSelector.querySelector('.folder-text').textContent = 'File Caricati!';
+                    }
+                    
+                    // Show file count with breakdown
+                    let countText = `${multimediaFiles.length} file trovati`;
+                    if (videoCount > 0 || audioCount > 0 || imageCount > 0) {
+                        const breakdown = [];
+                        if (videoCount > 0) breakdown.push(`${videoCount} video`);
+                        if (audioCount > 0) breakdown.push(`${audioCount} audio`);
+                        if (imageCount > 0) breakdown.push(`${imageCount} immagini`);
+                        countText += ` (${breakdown.join(', ')})`;
+                    }
+                    
+                    fileCount.textContent = countText;
                     fileCount.style.display = 'inline-block';
                     
                     // Enable create button
                     document.getElementById('createButton').disabled = false;
+                    
+                    // Update video count slider max value
+                    const videoCountSlider = document.getElementById('videoCount');
+                    videoCountSlider.max = Math.max(3, multimediaFiles.length);
+                    if (this.videoCount > multimediaFiles.length) {
+                        this.videoCount = Math.min(10, multimediaFiles.length);
+                        videoCountSlider.value = this.videoCount;
+                        document.getElementById('videoCountValue').textContent = this.videoCount;
+                        document.getElementById('selectedVideoCount').textContent = this.videoCount;
+                    }
                 } else {
-                    alert('Nessun video trovato nella cartella selezionata!');
+                    alert('Nessun file multimediale trovato! Supportati: video, audio, immagini');
                 }
             }
 
@@ -1432,5 +1533,6 @@ Questo è un prototipo. In una versione completa, qui verrebbe scaricato il vide
             new VideoMontageCreator();
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976d71ffd42ad499',t:'MTc1NjQ4NTE1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976d7c2d54afea35',t:'MTc1NjQ4NTU3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
+
