@@ -113,7 +113,7 @@
           </div>
         </div>
         <div class="warn" id="compatNote" style="display:none">
-          Suggerimento: su iOS/Safari il formato prodotto è <b>WebM</b>. Per MP4/H.264 useremo FFmpegKit in versione nativa (Capacitor) o un backend FFmpeg.
+          Suggerimento: il recorder usa il profilo più compatibile disponibile. Se l’audio non è supportato nel profilo WebM del tuo browser, verrà registrato solo il video.
         </div>
       </div>
 
@@ -152,11 +152,11 @@
       <details class="step card">
         <summary><b>Autotest & Dettagli tecnici</b></summary>
         <div class="muted" style="margin-top:8px">
-          Questa versione rende via <b>Canvas + MediaRecorder</b> (video) e <b>WebAudio</b> (audio). Ho aggiunto:
+          Questa versione rende via <b>Canvas + MediaRecorder</b> (video) e <b>WebAudio</b> (audio). Ha:
           <ul>
-            <li>Filtro clip non riproducibili (es. codec non supportati) per evitare crash.</li>
-            <li>Timeout di caricamento, retry e <em>skip</em> clip problematici.</li>
-            <li>Revoca degli Object URL per non saturare memoria.</li>
+            <li>Filtro clip non riproducibili (codec non supportati) con popup.</li>
+            <li>Timeout di caricamento e skip sicuro dei clip problematici.</li>
+            <li>Scelta MIME dinamica per evitare l’errore su Opus.</li>
           </ul>
         </div>
         <button class="btn btn-secondary" id="runSelfTest">🧪 Esegui Autotest</button>
@@ -181,23 +181,16 @@
 
     // Stato app
     const state = {
-      files: [],      // File[]
-      picked: [],     // clip scelti
+      files: [], picked: [],
       template: 'custom',
-      total: 60,
-      perClip: 4,
-      count: 10,
-      fps: 30,
-      w: 1080, h: 1920,
+      total: 60, perClip: 4, count: 10,
+      fps: 30, w: 1080, h: 1920,
       crossfade: 0.4,
-      lastBlob: null  // per export MP4
+      lastBlob: null
     };
 
     // Support check
-    const supports = {
-      mediaRecorder: !!window.MediaRecorder,
-      canPlay: document.createElement('video'),
-    };
+    const supports = { mediaRecorder: !!window.MediaRecorder, canPlay: document.createElement('video') };
 
     // UI wiring
     $('#chooseFiles').onclick = () => $('#fileInput').click();
@@ -252,7 +245,7 @@
 
     function canBrowserPlay(file){
       const mime = file.type || ext2mime(file.name);
-      if(!mime) return true; // provo comunque
+      if(!mime) return true;
       if(mime.startsWith('video/')){
         const res = supports.canPlay.canPlayType(mime);
         return res === 'probably' || res === 'maybe';
@@ -262,7 +255,6 @@
 
     function ingest(files){
       const mm = files.filter(f => /^(video|image|audio)\//.test(f.type) || /\.(mp4|mov|webm|mkv|m4v|jpg|jpeg|png|gif|bmp|webp|mp3|wav)$/i.test(f.name));
-      // Filtra quelli chiaramente non riproducibili dal browser
       const playable = mm.filter(canBrowserPlay);
       const skipped = mm.length - playable.length;
       state.files = playable;
@@ -283,12 +275,19 @@
       estimate();
     }
 
-    function estimate(){
-      const est = Math.ceil(state.total / state.perClip);
-      $('#estClips').textContent = est;
-    }
-
+    function estimate(){ $('#estClips').textContent = Math.ceil(state.total / state.perClip); }
     function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j]]; } return arr; }
+
+    // === Helper: scelta MIME sicura per MediaRecorder ===
+    function pickRecorderMime(wantsAudio = true){
+      const withAudio = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus'];
+      const noAudio   = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+      const list = wantsAudio ? withAudio : noAudio;
+      for(const m of list){
+        try { if (MediaRecorder.isTypeSupported(m)) return m; } catch {}
+      }
+      return null;
+    }
 
     async function start(){
       if(!supports.mediaRecorder){
@@ -297,10 +296,8 @@
       }
       if(state.files.length===0){ alert('Carica prima dei file.'); return; }
 
-      // Scegli clip casuali
       const pool = shuffle([...state.files]).slice(0, Math.min(state.count, state.files.length));
 
-      // PROBE: carica metadati, salta clip problematici (es. codec non supportati)
       const picked = [];
       const skippedNames = [];
       for(const f of pool){
@@ -314,7 +311,6 @@
         return;
       }
 
-      // Se ci sono file saltati, mostra popup di conferma
       if(skippedNames.length){
         const proceed = await confirmProceedSkipped(skippedNames);
         if(!proceed){ return; }
@@ -334,7 +330,7 @@
         a.href = url;
         const stamp = new Date().toISOString().replace(/[:.]/g,'');
         a.download = `M2M_reel_${stamp}.${blob.type.includes('webm')?'webm':'mp4'}`;
-        state.lastBlob = blob; // conserva per export MP4
+        state.lastBlob = blob;
         document.getElementById('exportMp4Btn').disabled = false;
         $('#resultBox').style.display='block';
         $('#compatNote').style.display='block';
@@ -348,10 +344,7 @@
       }
     }
 
-    function updateProgress(pct,text){
-      $('#progressFill').style.width = pct+'%';
-      $('#progressText').textContent = text || '';
-    }
+    function updateProgress(pct,text){ $('#progressFill').style.width = pct+'%'; $('#progressText').textContent = text || ''; }
 
     // Popup informativo su file non compatibili
     function confirmProceedSkipped(names){
@@ -393,10 +386,8 @@
           return { file, url, kind:'image', name:file.name, revoke:() => URL.revokeObjectURL(url) };
         }
         if(kindGuess==='audio'){
-          // Non testiamo la decodifica completa; lasciamo a runtime ma creiamo un oggetto clip
           return { file, url, kind:'audio', name:file.name, revoke:() => URL.revokeObjectURL(url) };
         }
-        // Video: proviamo a caricare metadati con timeout + fallback
         const v = document.createElement('video');
         v.src = url; v.crossOrigin='anonymous'; v.preload='metadata'; v.playsinline = true; v.muted = true;
         const ok = await waitVideoReady(v, 6000);
@@ -412,9 +403,7 @@
       return new Promise((resolve)=>{
         let done=false; const to = setTimeout(()=>{ if(!done){ done=true; resolve(false);} }, timeoutMs);
         const clean = () => { if(done) return; done=true; clearTimeout(to); resolve(true); };
-        v.onloadedmetadata = clean;
-        v.oncanplay = clean;
-        v.oncanplaythrough = clean;
+        v.onloadedmetadata = clean; v.oncanplay = clean; v.oncanplaythrough = clean;
         v.onerror = () => { if(!done){ done=true; clearTimeout(to); resolve(false);} };
       });
     }
@@ -436,23 +425,29 @@
 
       // Stream video dal canvas
       const canvasStream = cvs.captureStream(fps);
-      const mixed = new MediaStream([...canvasStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
 
-      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : (
-                   MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm');
+      // Scegli un MIME compatibile: prova con audio Opus, altrimenti solo video
+      let mime = pickRecorderMime(true);
+      let includeAudio = true;
+      if(!mime){ mime = pickRecorderMime(false); includeAudio = false; }
+      if(!mime) throw new Error('Nessun MIME supportato da MediaRecorder per WebM.');
+
+      // Costruisci lo stream finale
+      let tracks = [...canvasStream.getVideoTracks()];
+      if(includeAudio){
+        tracks.push(...dest.stream.getAudioTracks());
+      } else {
+        log('⚠️ Audio escluso perché il MIME selezionato non supporta opus:', mime);
+        const note = document.getElementById('compatNote');
+        if (note) note.style.display = 'block';
+      }
+      const mixed = new MediaStream(tracks);
+
+      // Recorder
       const rec = new MediaRecorder(mixed, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
       const chunks = [];
       rec.ondataavailable = e => { if(e.data && e.data.size>0) chunks.push(e.data); };
       const done = new Promise(res => { rec.onstop = () => res(new Blob(chunks, { type: mime })); });
-
-      const connectAudio = (mediaEl) => {
-        try{
-          const src = ac.createMediaElementSource(mediaEl);
-          src.connect(dest);
-          return src;
-        }catch(err){ log('Audio non collegabile (CORS / clip senza audio):', err.message||err); return null; }
-      };
-
       rec.start(1000);
 
       // Prepara elementi
@@ -495,7 +490,7 @@
         if(part.type==='video'){
           const v = part.el; v.currentTime = 0; await v.play().catch(()=>{});
           if(currentSource) try{ currentSource.disconnect(); }catch{}
-          currentSource = connectAudio(v);
+          try{ currentSource = ac.createMediaElementSource(v); currentSource.connect(dest); }catch{}
           const tEnd = part.dur; const startTs = performance.now();
           await new Promise((resolve)=>{
             const draw = () => {
@@ -530,9 +525,8 @@
           });
         } else if(part.type==='audio'){
           if(currentSource) try{ currentSource.disconnect(); }catch{}
-          const aud = new Audio(part.el.url);
-          aud.crossOrigin='anonymous'; aud.loop=false; aud.currentTime=0; await aud.play().catch(()=>{});
-          currentSource = connectAudio(aud);
+          const aud = new Audio(part.el.url); aud.crossOrigin='anonymous'; aud.loop=false; aud.currentTime=0; await aud.play().catch(()=>{});
+          try{ currentSource = ac.createMediaElementSource(aud); currentSource.connect(dest); }catch{}
           ctx.fillRect(0,0,w,h);
           await new Promise(res=> setTimeout(res, part.dur*1000));
           aud.pause();
@@ -553,11 +547,10 @@
     async function runSelfTest(){
       log('--- AUTOTEST ---');
       if(!supports.mediaRecorder){ log('❌ MediaRecorder non supportato'); alert('MediaRecorder non supportato in questo browser.'); return; }
-      // genera 2 micro-video via canvas
       const blobs = [];
       for(const color of ['#d6336c','#1c7ed6']){
         const c = document.createElement('canvas'); c.width=640; c.height=360; const cx=c.getContext('2d');
-        const s = c.captureStream(30); const mr = new MediaRecorder(s, {mimeType: 'video/webm;codecs=vp8'});
+        const s = c.captureStream(30); const mr = new MediaRecorder(s, {mimeType: pickRecorderMime(false) || 'video/webm'});
         const cs=[]; mr.ondataavailable=(e)=>{ if(e.data.size) cs.push(e.data); };
         mr.start(200);
         const t0=performance.now();
@@ -565,7 +558,7 @@
           const draw=()=>{ cx.fillStyle=color; cx.fillRect(0,0,c.width,c.height); if(performance.now()-t0<1500){ requestAnimationFrame(draw);} else { mr.stop(); res(); } };
           draw();
         });
-        const blob = await new Promise(res=>{ mr.onstop=()=>res(new Blob(cs,{type:'video/webm'})); });
+        const blob = await new Promise(res=>{ mr.onstop=()=>res(new Blob(cs,{type: mr.mimeType || 'video/webm'})); });
         blobs.push(new File([blob], `auto_${color.replace('#','')}.webm`, {type:'video/webm'}));
       }
       ingest(blobs);
@@ -575,10 +568,7 @@
     // === Export MP4 (H.264) ===
     async function exportToMp4(){
       try{
-        if(!state.lastBlob){
-          alert('Crea prima un video (WebM), poi esporta.');
-          return;
-        }
+        if(!state.lastBlob){ alert('Crea prima un video (WebM), poi esporta.'); return; }
         const cap = window.Capacitor;
         const isNative = !!(cap && cap.isNativePlatform);
         const Plugins = cap?.Plugins || {};
@@ -586,7 +576,6 @@
         const FFmpegKit = Plugins.FFmpegKit || window.FFmpegKit || Plugins?.FFmpegKitPlugin;
 
         if(isNative && Filesystem && FFmpegKit){
-          // Salva il WebM in Cache e convertilo in MP4 via FFmpegKit
           const b64 = await blobToBase64(state.lastBlob);
           const inputName = `m2m_input_${Date.now()}.webm`;
           const outputName = `m2m_output_${Date.now()}.mp4`;
@@ -594,14 +583,11 @@
           const inPath = (await Filesystem.getUri({ path: inputName, directory: 'CACHE' })).uri;
           const outPath = (await Filesystem.getUri({ path: outputName, directory: 'CACHE' })).uri;
           const cmd = `-y -i "${inPath}" -vf scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=yuv420p -r 30 -c:v libx264 -preset veryfast -crf 21 -c:a aac -b:a 160k "${outPath}"`;
-
           const sess = await FFmpegKit.execute(cmd);
           const rc = sess?.getReturnCode?.() || sess?.returnCode || 0;
           if(rc && rc.value && rc.value !== 0){ throw new Error('FFmpegKit RC '+rc.value); }
-
           alert('MP4 esportato in Cache: '+ outputName + '\nApri l\'app File/Condividi per recuperarlo.');
         } else {
-          // Web fallback: mostra istruzioni FFmpeg
           showDialog(document.getElementById('mp4HelpDialog'));
         }
       }catch(err){
